@@ -113,7 +113,6 @@ void init_leaper_attacks()
         pawn_attacks[black][square] = mask_pawn_attacks(black, square);
     }
 }
-
 //Main driver
 int main()
 {
