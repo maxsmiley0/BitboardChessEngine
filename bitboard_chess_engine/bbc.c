@@ -37,6 +37,7 @@ enum {white, black};
 #define set_bit(bitboard, square) (bitboard |= (1ULL << square))
 //deletes bit... why don't we just & with 0?
 #define pop_bit(bitboard, square) (get_bit(bitboard, square) ? bitboard ^= (1ULL << square) : 0)
+#define count_bits(bitboard) __builtin_popcountll(bitboard)
 
 void print_bitboard(U64 bitboard)
 {
@@ -342,7 +343,8 @@ int main()
     set_bit(block, b4);
     set_bit(block, g4);
     print_bitboard(block);
-
+    
     print_bitboard(rook_attacks_on_the_fly(d4, block));
+    printf("bit count: %d\n", count_bits(rook_attacks_on_the_fly(d4, block)));
     return 0;
 }
