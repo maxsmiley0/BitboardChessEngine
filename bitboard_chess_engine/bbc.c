@@ -103,7 +103,6 @@ U64 mask_pawn_attacks(int side, int square)
     //return attack map
     return attacks;
 }
-
 //generate knight attacks
 U64 mask_knight_attacks(int square)
 {
@@ -130,7 +129,6 @@ U64 mask_knight_attacks(int square)
     //return attack map
     return attacks;
 }
-
 //generate king attacks
 U64 mask_king_attacks(int square)
 {
@@ -157,7 +155,6 @@ U64 mask_king_attacks(int square)
     //return attack map
     return attacks;
 }
-
 //mask bishop attacks
 U64 mask_bishop_attacks(int square)
 {
@@ -195,7 +192,43 @@ U64 mask_bishop_attacks(int square)
 
     return attacks;
 }
+//mask rook attacks
+U64 mask_rook_attacks(int square)
+{
+    //result attacs bitboard
+    U64 attacks = 0ULL;
+    
+    //init ranks & files
+    int r, f;
 
+    //init target rank & files (next target square within ray of slider piece)
+    int tr = square / 8;
+    int tf = square % 8;
+
+    //mask relevant bishop occupancy bits... why don't we add edges?
+    for (r = tr + 1; r <= 6; r++)
+    {
+        //reconverting (r,f) -> sq
+        attacks |= (1ULL << (r * 8 + tf));
+    }
+    for (r = tr - 1; r >= 1; r--)
+    {
+        //reconverting (r,f) -> sq
+        attacks |= (1ULL << (r * 8 + tf));
+    }
+    for (f = tf + 1; f <= 6; f++)
+    {
+        //reconverting (r,f) -> sq
+        attacks |= (1ULL << (tr * 8 + f));
+    }
+    for (f = tf - 1; f >= 1; f--)
+    {
+        //reconverting (r,f) -> sq
+        attacks |= (1ULL << (tr * 8 + f));
+    }
+
+    return attacks;
+}
 //init leaper pieces attacks
 void init_leaper_attacks()
 {
@@ -218,6 +251,6 @@ int main()
 {
     init_leaper_attacks();
     for (int i = 0; i < 64; i++)
-        print_bitboard(mask_bishop_attacks(i));
+        print_bitboard(mask_rook_attacks(i));
     return 0;
 }
