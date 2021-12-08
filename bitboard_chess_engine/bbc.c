@@ -76,7 +76,7 @@ U64 king_attacks[64];
 //generate pawn attacks
 U64 mask_pawn_attacks(int side, int square)
 {
-    //result attacs bitboard
+    //result attacks bitboard
     U64 attacks = 0ULL;
     
     //piece bitboard
@@ -106,7 +106,7 @@ U64 mask_pawn_attacks(int side, int square)
 //generate knight attacks
 U64 mask_knight_attacks(int square)
 {
-    //result attacs bitboard
+    //result attacks bitboard
     U64 attacks = 0ULL;
     
     //piece bitboard
@@ -132,7 +132,7 @@ U64 mask_knight_attacks(int square)
 //generate king attacks
 U64 mask_king_attacks(int square)
 {
-    //result attacs bitboard
+    //result attacks bitboard
     U64 attacks = 0ULL;
     
     //piece bitboard
@@ -158,7 +158,7 @@ U64 mask_king_attacks(int square)
 //mask bishop attacks
 U64 mask_bishop_attacks(int square)
 {
-    //result attacs bitboard
+    //result attacks bitboard
     U64 attacks = 0ULL;
     
     //init ranks & files
@@ -195,7 +195,7 @@ U64 mask_bishop_attacks(int square)
 //mask rook attacks
 U64 mask_rook_attacks(int square)
 {
-    //result attacs bitboard
+    //result attacks bitboard
     U64 attacks = 0ULL;
     
     //init ranks & files
@@ -205,7 +205,7 @@ U64 mask_rook_attacks(int square)
     int tr = square / 8;
     int tf = square % 8;
 
-    //mask relevant bishop occupancy bits... why don't we add edges?
+    //mask relevant rook occupancy bits... why don't we add edges?
     for (r = tr + 1; r <= 6; r++)
     {
         //reconverting (r,f) -> sq
@@ -230,6 +230,89 @@ U64 mask_rook_attacks(int square)
     return attacks;
 }
 //init leaper pieces attacks
+
+//generate bishop attacks on the fly
+U64 bishop_attacks_on_the_fly(int square, U64 block)
+{
+    //generate bishop attacks
+    U64 attacks = 0ULL;
+    
+    //init ranks & files
+    int r, f;
+
+    //init target rank & files (next target square within ray of slider piece)
+    int tr = square / 8;
+    int tf = square % 8;
+
+    //mask relevant bishop occupancy bits... why don't we add edges?
+    for (r = tr + 1, f = tf + 1; r <= 7 && f <= 7; r++, f++)
+    {
+        //reconverting (r,f) -> sq
+        attacks |= (1ULL << (r * 8 + f));
+        if ((1ULL << (r * 8 + f)) & block) break;
+    } 
+    for (r = tr - 1, f = tf + 1; r >= 0 && f <= 7; r--, f++)
+    {
+        //reconverting (r,f) -> sq
+        attacks |= (1ULL << (r * 8 + f));
+        if ((1ULL << (r * 8 + f)) & block) break;
+    } 
+    for (r = tr + 1, f = tf - 1; r <= 7 && f >= 0; r++, f--)
+    {
+        //reconverting (r,f) -> sq
+        attacks |= (1ULL << (r * 8 + f));
+        if ((1ULL << (r * 8 + f)) & block) break;
+    } 
+    for (r = tr - 1, f = tf - 1; r >= 0 && f >= 0; r--, f--)
+    {
+        //reconverting (r,f) -> sq
+        attacks |= (1ULL << (r * 8 + f));
+        if ((1ULL << (r * 8 + f)) & block) break;
+    } 
+
+    return attacks;
+}
+//generate rook attacks on the fly
+U64 rook_attacks_on_the_fly(int square, U64 block)
+{
+    //generate rook attacks
+    U64 attacks = 0ULL;
+    
+    //init ranks & files
+    int r, f;
+
+    //init target rank & files (next target square within ray of slider piece)
+    int tr = square / 8;
+    int tf = square % 8;
+
+    //mask relevant rook occupancy bits... why don't we add edges?
+    for (r = tr + 1; r <= 7; r++)
+    {
+        //reconverting (r,f) -> sq
+        attacks |= (1ULL << (r * 8 + tf));
+        if ((1ULL << (r * 8 + tf)) & block) break;
+    }
+    for (r = tr - 1; r >= 0; r--)
+    {
+        //reconverting (r,f) -> sq
+        attacks |= (1ULL << (r * 8 + tf));
+        if ((1ULL << (r * 8 + tf)) & block) break;
+    }
+    for (f = tf + 1; f <= 7; f++)
+    {
+        //reconverting (r,f) -> sq
+        attacks |= (1ULL << (tr * 8 + f));
+        if ((1ULL << (tr * 8 + f)) & block) break;
+    }
+    for (f = tf - 1; f >= 0; f--)
+    {
+        //reconverting (r,f) -> sq
+        attacks |= (1ULL << (tr * 8 + f));
+        if ((1ULL << (tr * 8 + f)) & block) break;
+    }
+
+    return attacks;
+}
 void init_leaper_attacks()
 {
     //loop over 64 board square
@@ -249,8 +332,17 @@ void init_leaper_attacks()
 //Main driver
 int main()
 {
+    //init leaper pieces attacks
     init_leaper_attacks();
-    for (int i = 0; i < 64; i++)
-        print_bitboard(mask_rook_attacks(i));
+
+    //init occupancy bitboard
+    U64 block = 0ULL;
+    set_bit(block, d7);
+    set_bit(block, d2);
+    set_bit(block, b4);
+    set_bit(block, g4);
+    print_bitboard(block);
+
+    print_bitboard(rook_attacks_on_the_fly(d4, block));
     return 0;
 }
