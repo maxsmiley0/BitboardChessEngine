@@ -18,6 +18,8 @@ enum {
     a1, b1, c1, d1, e1, f1, g1, h1
 };
 
+enum {white, black};
+
 /*
 "a8", "b8", "c8", "e8", "f8", "g8", "h8",
 "a7", "b7", "c7", "e7", "f7", "g7", "h7",
@@ -61,17 +63,65 @@ void print_bitboard(U64 bitboard)
     printf("      Bitboard: %llud\n\n", bitboard);
 }
 
+const U64 not_a_file = 18374403900871474942ULL;
+const U64 not_h_file = 9187201950435737471ULL;
+const U64 not_hg_file = 4557430888798830399ULL;
+const U64 not_ab_file = 18229723555195321596ULL;
+
+//Pawn attack tables (side, square)
+U64 pawn_attacks[2][64];
+
+//generate pawn attacks
+U64 mask_pawn_attacks(int side, int square)
+{
+    //result attacs bitboard
+    U64 attacks = 0ULL;
+    
+    //piece bitboard
+    U64 bitboard = 0ULL;
+
+    //set piece on board
+    set_bit(bitboard, square);
+    //white pawns
+    if (!side)
+    {
+        //To prevent out of bounds shenanigans
+        if ((bitboard >> 7) & not_a_file) attacks |= (bitboard >> 7);
+        if ((bitboard >> 9) & not_h_file) attacks |= (bitboard >> 9);
+    }
+
+    //black pawns
+    else 
+    {
+        //To prevent out of bounds shenanigans
+        if ((bitboard << 7) & not_h_file) attacks |= (bitboard << 7);
+        if ((bitboard << 9) & not_a_file) attacks |= (bitboard << 9);
+    }
+
+    //return attack map
+    return attacks;
+}
+
+//init leaper pieces attacks
+void init_leaper_attacks()
+{
+    //loop over 64 board square
+    for (int square = 0; square < 64; square++)
+    {
+        //init pawn attacks
+        pawn_attacks[white][square] = mask_pawn_attacks(white, square);
+        pawn_attacks[black][square] = mask_pawn_attacks(black, square);
+    }
+}
+
 //Main driver
 int main()
 {
-    U64 bitboard = 0ULL;
-
-    set_bit(bitboard, e4);
-    set_bit(bitboard, c3);
-    set_bit(bitboard, f2);
-    pop_bit(bitboard, e4);
-    pop_bit(bitboard, e4);
-    print_bitboard(bitboard);
-
+    init_leaper_attacks();
+    for (int square = 0; square < 64; square++)
+    {
+        print_bitboard(pawn_attacks[white][square]);
+        print_bitboard(pawn_attacks[black][square]);
+    }
     return 0;
 }
