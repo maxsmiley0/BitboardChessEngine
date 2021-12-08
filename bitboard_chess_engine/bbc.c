@@ -94,6 +94,28 @@ const U64 not_h_file = 9187201950435737471ULL;
 const U64 not_hg_file = 4557430888798830399ULL;
 const U64 not_ab_file = 18229723555195321596ULL;
 
+//"occupancy bit count for every square of the board"
+const int bishop_relevant_bits[64] = {
+    6, 5, 5, 5, 5, 5, 5, 6,         
+    5, 5, 5, 5, 5, 5, 5, 5,        
+    5, 5, 7, 7, 7, 7, 5, 5,
+    5, 5, 7, 9, 9, 7, 5, 5,
+    5, 5, 7, 9, 9, 7, 5, 5,
+    5, 5, 7, 7, 7, 7, 5, 5,
+    5, 5, 5, 5, 5, 5, 5, 5,
+    6, 5, 5, 5, 5, 5, 5, 6
+};
+const int rook_relevant_bits[64] = {
+    12, 11, 11, 11, 11, 11, 11, 12, 
+    11, 10, 10, 10, 10, 10, 10, 11, 
+    11, 10, 10, 10, 10, 10, 10, 11, 
+    11, 10, 10, 10, 10, 10, 10, 11, 
+    11, 10, 10, 10, 10, 10, 10, 11, 
+    11, 10, 10, 10, 10, 10, 10, 11, 
+    11, 10, 10, 10, 10, 10, 10, 11,
+    12, 11, 11, 11, 11, 11, 11, 12
+};
+
 //Pawn attack tables (side, square)
 U64 pawn_attacks[2][64];
 U64 knight_attacks[64];
@@ -392,16 +414,14 @@ int main()
     //init leaper pieces attacks
     init_leaper_attacks();
 
-    //mask piece attacks at given square
-    U64 attack_mask = mask_rook_attacks(a1);
-
-    //loop over occupancy indicies
-    for (int index = 0; index < 4096; index++)
+    for (int rank = 0; rank < 8; rank++)
     {
-        //init occupancy
-        U64 occupancy = set_occupancy(index, count_bits(attack_mask), attack_mask);
-        print_bitboard(occupancy);
-        getchar();
+        for (int file = 0; file < 8; file++)
+        {
+            int square = rank * 8 + file;
+            printf("%d, ", count_bits(mask_rook_attacks(square)));
+        }
+        printf("\n");
     }
 
     return 0;
