@@ -20,16 +20,16 @@ enum {
 
 enum {white, black};
 
-/*
-"a8", "b8", "c8", "e8", "f8", "g8", "h8",
-"a7", "b7", "c7", "e7", "f7", "g7", "h7",
-"a6", "b6", "c6", "e6", "f6", "g6", "h6",
-"a5", "b5", "c5", "e5", "f5", "g5", "h5",
-"a4", "b4", "c4", "e4", "f4", "g4", "h4",
-"a3", "b3", "c3", "e3", "f3", "g3", "h3",
-"a2", "b2", "c2", "e2", "f2", "g2", "h2",
-"a1", "b1", "c1", "e1", "f1", "g1", "h1",
-*/
+const char* square_to_coordinates[] = {
+    "a8", "b8", "c8", "d8", "e8", "f8", "g8", "h8",
+    "a7", "b7", "c7", "d7", "e7", "f7", "g7", "h7",
+    "a6", "b6", "c6", "d6", "e6", "f6", "g6", "h6",
+    "a5", "b5", "c5", "d5", "e5", "f5", "g5", "h5",
+    "a4", "b4", "c4", "d4", "e4", "f4", "g4", "h4",
+    "a3", "b3", "c3", "d3", "e3", "f3", "g3", "h3",
+    "a2", "b2", "c2", "d2", "e2", "f2", "g2", "h2",
+    "a1", "b1", "c1", "d1", "e1", "f1", "g1", "h1"
+};
 
 //set/get/pop macros
 //gets nth bit of square
@@ -38,6 +38,31 @@ enum {white, black};
 //deletes bit... why don't we just & with 0?
 #define pop_bit(bitboard, square) (get_bit(bitboard, square) ? bitboard ^= (1ULL << square) : 0)
 #define count_bits(bitboard) __builtin_popcountll(bitboard)
+
+//for ls1b de bruijn multiplication
+const int index64[64] = {
+    0,  1, 48,  2, 57, 49, 28,  3,
+   61, 58, 50, 42, 38, 29, 17,  4,
+   62, 55, 59, 36, 53, 51, 43, 22,
+   45, 39, 33, 30, 24, 18, 12,  5,
+   63, 47, 56, 27, 60, 41, 37, 16,
+   54, 35, 52, 21, 44, 32, 23, 11,
+   46, 26, 40, 15, 34, 20, 31, 10,
+   25, 14, 19,  9, 13,  8,  7,  6
+};
+
+static inline int get_ls1b_index(U64 bitboard) {
+   const U64 debruijn64 = 0x03f79d71b4cb0a89;
+   if (bitboard)
+   {
+       return index64[((bitboard & -bitboard) * debruijn64) >> 58];
+   }
+   else 
+   {
+       //return illegal index
+       return -1;
+   }
+}
 
 void print_bitboard(U64 bitboard)
 {
@@ -343,8 +368,9 @@ int main()
     set_bit(block, b4);
     set_bit(block, g4);
     print_bitboard(block);
+
+    printf("     index: %d     coordinate: %s\n", get_ls1b_index(block), square_to_coordinates[get_ls1b_index(block)]);
     
-    print_bitboard(rook_attacks_on_the_fly(d4, block));
-    printf("bit count: %d\n", count_bits(rook_attacks_on_the_fly(d4, block)));
+    
     return 0;
 }
