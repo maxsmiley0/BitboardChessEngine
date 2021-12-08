@@ -181,6 +181,8 @@ U64 mask_king_attacks(int square)
     //return attack map
     return attacks;
 }
+
+//these are all the squares that CAN impact your bishop/rook's mobility when attacking (potential blockers)
 //mask bishop attacks
 U64 mask_bishop_attacks(int square)
 {
@@ -257,6 +259,7 @@ U64 mask_rook_attacks(int square)
 }
 //init leaper pieces attacks
 
+//all the squares that the bishop/rook CAN move to unimpeded
 //generate bishop attacks on the fly
 U64 bishop_attacks_on_the_fly(int square, U64 block)
 {
@@ -355,22 +358,51 @@ void init_leaper_attacks()
         king_attacks[square] = mask_king_attacks(square);
     }
 }
+
+//Magic numbers are index to attack tables that map block boards to attack boards? E.g. many block boards map to same attacks..?
+
+//set occupancies
+U64 set_occupancy(int index, int bits_in_mask, U64 attack_mask)
+{
+    // occupancy map
+    U64 occupancy = 0ULL;
+
+    //loop over the range of bits within attack mask
+    for (int count = 0; count < bits_in_mask; count++)
+    {
+        //get ls1b of attack mask
+        int square = get_ls1b_index(attack_mask);
+
+        //pop ls1b in attack map
+        pop_bit(attack_mask, square);
+
+        //make sure occupancy is on board
+        if (index & (1 << count))
+        {
+            //popuate occupancy map
+            occupancy |= (1ULL << square);
+        }
+    }
+
+    return occupancy;   
+}
 //Main driver
 int main()
 {
     //init leaper pieces attacks
     init_leaper_attacks();
 
-    //init occupancy bitboard
-    U64 block = 0ULL;
-    set_bit(block, d7);
-    set_bit(block, d2);
-    set_bit(block, b4);
-    set_bit(block, g4);
-    print_bitboard(block);
+    //mask piece attacks at given square
+    U64 attack_mask = mask_rook_attacks(a1);
 
-    printf("     index: %d     coordinate: %s\n", get_ls1b_index(block), square_to_coordinates[get_ls1b_index(block)]);
-    
-    
+    //loop over occupancy indicies
+    for (int index = 0; index < 4096; index++)
+    {
+        //init occupancy
+        U64 occupancy = set_occupancy(index, count_bits(attack_mask), attack_mask);
+        print_bitboard(occupancy);
+        getchar();
+    }
+
     return 0;
 }
