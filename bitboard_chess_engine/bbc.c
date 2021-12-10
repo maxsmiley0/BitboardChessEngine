@@ -39,6 +39,7 @@ const char* square_to_coordinates[] = {
 #define pop_bit(bitboard, square) (get_bit(bitboard, square) ? bitboard ^= (1ULL << square) : 0)
 #define count_bits(bitboard) __builtin_popcountll(bitboard)
 
+//rng
 //for ls1b de bruijn multiplication
 const int index64[64] = {
     0,  1, 48,  2, 57, 49, 28,  3,
@@ -50,6 +51,41 @@ const int index64[64] = {
    46, 26, 40, 15, 34, 20, 31, 10,
    25, 14, 19,  9, 13,  8,  7,  6
 };
+
+//PSRN state
+unsigned int state = 1804289383;
+//gen 32bit PSR
+unsigned int get_random_number()
+{
+    unsigned int number = state;
+    //xor shift algorithm
+    number ^= number << 13;
+    number ^= number >> 17;
+    number ^= number << 5;
+    //update state so different next rng query
+    state = number;
+
+    return number;
+}
+
+//generate 64-bit pseudo legal numbers
+U64 get_random_U64_number()
+{
+    U64 n1, n2, n3, n4;
+    //Slice each to 16 bit sections
+    n1 = (U64)(get_random_number() & 0xFFFF);
+    n2 = (U64)(get_random_number() & 0xFFFF);
+    n3 = (U64)(get_random_number() & 0xFFFF);
+    n4 = (U64)(get_random_number() & 0xFFFF);
+
+    return n1 | (n2 << 16) | (n3 << 32) | (n4 << 48);
+}
+
+//candidate... 1/8 populated
+U64 generate_magic_number()
+{
+    return (get_random_U64_number() & get_random_U64_number() & get_random_U64_number());
+}
 
 static inline int get_ls1b_index(U64 bitboard) {
    const U64 debruijn64 = 0x03f79d71b4cb0a89;
@@ -408,21 +444,12 @@ U64 set_occupancy(int index, int bits_in_mask, U64 attack_mask)
 
     return occupancy;   
 }
+
 //Main driver
 int main()
 {
     //init leaper pieces attacks
     init_leaper_attacks();
-
-    for (int rank = 0; rank < 8; rank++)
-    {
-        for (int file = 0; file < 8; file++)
-        {
-            int square = rank * 8 + file;
-            printf("%d, ", count_bits(mask_rook_attacks(square)));
-        }
-        printf("\n");
-    }
-
+    print_bitboard(generate_magic_number());
     return 0;
 }
