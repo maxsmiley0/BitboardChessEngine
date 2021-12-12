@@ -1011,6 +1011,30 @@ void print_attacked_squares(int side)
     printf("    a b c d e f g h\n\n");
 }
 
+static inline void generate_moves()
+{
+    //(pce current position, pce future position)
+    int source_square, int target_square;
+    //define current piece's bitboard copy & its attacks
+    U64 bitboard, attacks;
+    //Idea: loop through all piece bitboards, loop through all bits on those using ls1b, generate moves
+
+    for (int piece = P; piece <= k; piece++)
+    {
+        bitboard = bitboards[piece];
+        //Pawns & castling moves
+        if (side == white)
+        {
+
+        }
+        else 
+        {
+
+        }
+        //All other moves
+    }
+}
+
 //Main driver
 int main()
 {
