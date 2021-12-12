@@ -16,11 +16,18 @@ enum {
     a4, b4, c4, d4, e4, f4, g4, h4,      
     a3, b3, c3, d3, e3, f3, g3, h3,      
     a2, b2, c2, d2, e2, f2, g2, h2,      
-    a1, b1, c1, d1, e1, f1, g1, h1
+    a1, b1, c1, d1, e1, f1, g1, h1, no_sq
 };
 
-enum {white, black};
+enum {white, black, both};
 enum {rook, bishop};
+
+/* Castling perms
+0001 WKCA
+0010 WQCA
+0100 BKCA
+1000 BQCA
+*/
 
 const char* square_to_coordinates[] = {
     "a8", "b8", "c8", "d8", "e8", "f8", "g8", "h8",
@@ -35,11 +42,59 @@ const char* square_to_coordinates[] = {
 
 //set/get/pop macros
 //gets nth bit of square
-#define get_bit(bitboard, square) (bitboard & (1ULL << square))
-#define set_bit(bitboard, square) (bitboard |= (1ULL << square))
-//deletes bit... why don't we just & with 0?
-#define pop_bit(bitboard, square) (get_bit(bitboard, square) ? bitboard ^= (1ULL << square) : 0)
+#define get_bit(bitboard, square) ((bitboard) & (1ULL << (square)))
+#define set_bit(bitboard, square) ((bitboard) |= (1ULL << (square)))
+#define pop_bit(bitboard, square) ((bitboard) &= ~(1ULL << (square)))
 #define count_bits(bitboard) __builtin_popcountll(bitboard)
+
+//define piece bitboards (6 white pieces, 6 black pieces)
+U64 bitboards[12];
+//define occupancy bitboards (white, black, both)
+U64 occupancies[3];
+int side = -1;
+int enpas = no_sq;
+int castle; //castling rights
+enum {wk = 1, wq = 2, bk = 4, bq = 8};
+//Piece encoding
+enum {P, N, B, R, Q, K, p, n, b, r, q, k};
+//ASCII pieces
+char ascii_pieces[] = "PNBRQKpnbrqk";
+//unicode pieces
+char *unicode_pieces[12] = {"♙", "♘", "♗", "♖", "♕", "♔", "♟︎", "♞", "♝", "♜", "♛", "♚"};
+
+int char_pieces(char pce)
+{
+    switch (pce)
+    {
+        case 'P':
+            return P;
+        case 'N':
+            return N;
+        case 'B':
+            return B;
+        case 'R':
+            return R;
+        case 'Q':
+            return Q;
+        case 'K':
+            return K;
+        case 'p':
+            return p;
+        case 'n':
+            return n;
+        case 'b':
+            return b;
+        case 'r':
+            return r;
+        case 'q':
+            return q;
+        case 'k':
+            return k;
+        default:
+            printf("Error in char_pieces");
+            return 0;
+    }
+}
 
 //rng
 //for ls1b de bruijn multiplication
@@ -728,16 +783,20 @@ void init_all()
 int main()
 {
     init_all();
-
-    U64 occupancy = 0ULL;
-    set_bit(occupancy, c5);
-    set_bit(occupancy, f2);
-    set_bit(occupancy, h8);
-    set_bit(occupancy, b2);
-    set_bit(occupancy, g5);
-    set_bit(occupancy, e2);
-    set_bit(occupancy, e7);
-    print_bitboard(occupancy);
-    print_bitboard(get_rook_attacks(e5, occupancy));
+    set_bit(bitboards[P], e2);
+    print_bitboard(bitboards[P]);
+    printf("piece: %s\n", unicode_pieces[char_pieces('P')]);
+    printf("piece: %s\n", unicode_pieces[char_pieces('N')]);
+    printf("piece: %s\n", unicode_pieces[char_pieces('B')]);
+    printf("piece: %s\n", unicode_pieces[char_pieces('R')]);
+    printf("piece: %s\n", unicode_pieces[char_pieces('Q')]);
+    printf("piece: %s\n", unicode_pieces[char_pieces('K')]);
+    printf("piece: %s\n", unicode_pieces[char_pieces('p')]);
+    printf("piece: %s\n", unicode_pieces[char_pieces('n')]);
+    printf("piece: %s\n", unicode_pieces[char_pieces('b')]);
+    printf("piece: %s\n", unicode_pieces[char_pieces('r')]);
+    printf("piece: %s\n", unicode_pieces[char_pieces('q')]);
+    printf("piece: %s\n", unicode_pieces[char_pieces('k')]);
+    printf("piece: %s\n", unicode_pieces[char_pieces('W')]);
     return 0;
 }
