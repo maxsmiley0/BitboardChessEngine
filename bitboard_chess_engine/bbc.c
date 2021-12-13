@@ -1058,7 +1058,42 @@ static inline void generate_moves()
                         }
                     }
 
-                    //quiet pawn moves
+                    //attack pawn moves
+                    attacks = pawn_attacks[white][source_square] & occupancies[black];
+
+                    while (attacks)
+                    {
+                        target_square = get_ls1b_index(attacks);
+
+                        //pawn promotion... can we use masks instead?
+                        if (source_square >= a7 && source_square <= h7)
+                        {
+                            //add move into move list
+                            printf("pawn capture promotion: %s%sq\n", square_to_coordinates[source_square], square_to_coordinates[target_square]);
+                            printf("pawn capture promotion: %s%sr\n", square_to_coordinates[source_square], square_to_coordinates[target_square]);
+                            printf("pawn capture promotion: %s%sb\n", square_to_coordinates[source_square], square_to_coordinates[target_square]);
+                            printf("pawn capture promotion: %s%sk\n", square_to_coordinates[source_square], square_to_coordinates[target_square]);
+                        }
+                        else 
+                        {
+                            printf("pawn capture: %s%s\n", square_to_coordinates[source_square], square_to_coordinates[target_square]);
+                        }
+
+                        pop_bit(attacks, target_square);
+                    }
+
+                    //enpas
+                    if (enpas != no_sq)
+                    {
+                        U64 enpas_attacks = pawn_attacks[side][source_square] & (1ULL << enpas);
+                        if (enpas_attacks)
+                        {
+                            int target_enpas = get_ls1b_index(enpas_attacks);
+                            printf("pawn capture enpas: %s%s\n", square_to_coordinates[source_square], square_to_coordinates[target_enpas]);
+                        }
+                    }
+
+                    //pop ls1b from bb copy
                     pop_bit(bitboard, source_square);
                 }        
             }
@@ -1098,7 +1133,42 @@ static inline void generate_moves()
                         }
                     }
 
-                    //quiet pawn moves
+                    //attack pawn moves
+                    attacks = pawn_attacks[black][source_square] & occupancies[white];
+
+                    while (attacks)
+                    {
+                        target_square = get_ls1b_index(attacks);
+
+                        //pawn promotion... can we use masks instead?
+                        if (source_square >= a2 && source_square <= h2)
+                        {
+                            //add move into move list
+                            printf("pawn capture promotion: %s%sq\n", square_to_coordinates[source_square], square_to_coordinates[target_square]);
+                            printf("pawn capture promotion: %s%sr\n", square_to_coordinates[source_square], square_to_coordinates[target_square]);
+                            printf("pawn capture promotion: %s%sb\n", square_to_coordinates[source_square], square_to_coordinates[target_square]);
+                            printf("pawn capture promotion: %s%sk\n", square_to_coordinates[source_square], square_to_coordinates[target_square]);
+                        }
+                        else 
+                        {
+                            printf("pawn capture: %s%s\n", square_to_coordinates[source_square], square_to_coordinates[target_square]);
+                        }
+
+                        pop_bit(attacks, target_square);
+                    }
+
+                    //enpas
+                    if (enpas != no_sq)
+                    {
+                        U64 enpas_attacks = pawn_attacks[side][source_square] & (1ULL << enpas);
+                        if (enpas_attacks)
+                        {
+                            int target_enpas = get_ls1b_index(enpas_attacks);
+                            printf("pawn capture enpas: %s%s\n", square_to_coordinates[source_square], square_to_coordinates[target_enpas]);
+                        }
+                    }
+
+                    //pop ls1b from bb copy
                     pop_bit(bitboard, source_square);
                 }        
             }
@@ -1111,7 +1181,7 @@ static inline void generate_moves()
 int main()
 {
     init_all();
-    parse_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPpP/R3K2R b KQkq - 0 1 ");
+    parse_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/Pp2P3/2N2Q1p/1PPBBPpP/R3K2R b KQkq a3 0 1 ");
     print_board();
     generate_moves();
     return 0;
