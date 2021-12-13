@@ -1230,6 +1230,145 @@ static inline void generate_moves()
             }
         }
         //All other moves
+        if ((side == white) ? piece == N : piece == n)
+        {
+            while (bitboard)
+            {
+                source_square = get_ls1b_index(bitboard);
+                
+                attacks = knight_attacks[source_square] & ((side == white) ? ~occupancies[white] : ~occupancies[black]);
+                
+                while (attacks)
+                {
+                    target_square = get_ls1b_index(attacks);
+                    //quiet
+                    if (!get_bit(((side == white) ? occupancies[black] : occupancies[white]), target_square))
+                    {
+                        printf("piece move: %s%s\n", square_to_coordinates[source_square], square_to_coordinates[target_square]);
+                    }
+                    else 
+                    {
+                        printf("piece capture: %s%s\n", square_to_coordinates[source_square], square_to_coordinates[target_square]);
+                    }
+                    //capture move
+                    pop_bit(attacks, target_square);
+                }
+
+                pop_bit(bitboard, source_square);
+            }
+        }
+
+        if ((side == white) ? piece == B : piece == b)
+        {
+            while (bitboard)
+            {
+                source_square = get_ls1b_index(bitboard);
+                //do we need that last part?
+                attacks = get_bishop_attacks(source_square, occupancies[both]) & ((side == white) ? ~occupancies[white] : ~occupancies[black]);
+                
+                while (attacks)
+                {
+                    target_square = get_ls1b_index(attacks);
+                    //quiet
+                    if (!get_bit(((side == white) ? occupancies[black] : occupancies[white]), target_square))
+                    {
+                        printf("piece move: %s%s\n", square_to_coordinates[source_square], square_to_coordinates[target_square]);
+                    }
+                    else 
+                    {
+                        printf("piece capture: %s%s\n", square_to_coordinates[source_square], square_to_coordinates[target_square]);
+                    }
+                    //capture move
+                    pop_bit(attacks, target_square);
+                }
+
+                pop_bit(bitboard, source_square);
+            }
+        }
+
+        if ((side == white) ? piece == R : piece == r)
+        {
+            while (bitboard)
+            {
+                source_square = get_ls1b_index(bitboard);
+                
+                attacks = get_rook_attacks(source_square, occupancies[both]) & ((side == white) ? ~occupancies[white] : ~occupancies[black]);
+                
+                while (attacks)
+                {
+                    target_square = get_ls1b_index(attacks);
+                    //quiet
+                    if (!get_bit(((side == white) ? occupancies[black] : occupancies[white]), target_square))
+                    {
+                        printf("piece move: %s%s\n", square_to_coordinates[source_square], square_to_coordinates[target_square]);
+                    }
+                    else 
+                    {
+                        printf("piece capture: %s%s\n", square_to_coordinates[source_square], square_to_coordinates[target_square]);
+                    }
+                    //capture move
+                    pop_bit(attacks, target_square);
+                }
+
+                pop_bit(bitboard, source_square);
+            }
+        }
+
+        if ((side == white) ? piece == Q : piece == q)
+        {
+            while (bitboard)
+            {
+                source_square = get_ls1b_index(bitboard);
+                
+                attacks = get_queen_attacks(source_square, occupancies[both]) & ((side == white) ? ~occupancies[white] : ~occupancies[black]);
+                
+                while (attacks)
+                {
+                    target_square = get_ls1b_index(attacks);
+                    //quiet
+                    if (!get_bit(((side == white) ? occupancies[black] : occupancies[white]), target_square))
+                    {
+                        printf("piece move: %s%s\n", square_to_coordinates[source_square], square_to_coordinates[target_square]);
+                    }
+                    else 
+                    {
+                        printf("piece capture: %s%s\n", square_to_coordinates[source_square], square_to_coordinates[target_square]);
+                    }
+                    //capture move
+                    pop_bit(attacks, target_square);
+                }
+
+                pop_bit(bitboard, source_square);
+            }
+        }
+
+        if ((side == white) ? piece == K : piece == k)
+        {
+            while (bitboard)
+            {
+                source_square = get_ls1b_index(bitboard);
+                
+                attacks = king_attacks[source_square] & ((side == white) ? ~occupancies[white] : ~occupancies[black]);
+                
+                while (attacks)
+                {
+                    target_square = get_ls1b_index(attacks);
+                    //quiet
+                    if (!get_bit(((side == white) ? occupancies[black] : occupancies[white]), target_square))
+                    {
+                        printf("piece move: %s%s\n", square_to_coordinates[source_square], square_to_coordinates[target_square]);
+                    }
+                    else 
+                    {
+                        printf("piece capture: %s%s\n", square_to_coordinates[source_square], square_to_coordinates[target_square]);
+                    }
+                    //capture move
+                    pop_bit(attacks, target_square);
+                }
+
+                pop_bit(bitboard, source_square);
+            }
+        }
     }
 }
 
@@ -1237,7 +1376,7 @@ static inline void generate_moves()
 int main()
 {
     init_all();
-    parse_fen("r3k2r/ppppqp1R/bn2pnp1/3PN3/1p2P3/2NB1q1p/PPPB1PPP/R3K2R b KQkq - 0 1 ");
+    parse_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1 ");
     print_board();
     generate_moves();
     return 0;
