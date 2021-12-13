@@ -1014,7 +1014,7 @@ void print_attacked_squares(int side)
 static inline void generate_moves()
 {
     //(pce current position, pce future position)
-    int source_square, int target_square;
+    int source_square, target_square;
     //define current piece's bitboard copy & its attacks
     U64 bitboard, attacks;
     //Idea: loop through all piece bitboards, loop through all bits on those using ls1b, generate moves
@@ -1025,11 +1025,83 @@ static inline void generate_moves()
         //Pawns & castling moves
         if (side == white)
         {
+            if (piece == P)
+            {
+                while (bitboard) //loop until no more P
+                {
+                    source_square = get_ls1b_index(bitboard);
+                    target_square = source_square - 8;
 
+                    //generate quiet pawn moves
+                    if (!(target_square < a8) && !get_bit(occupancies[both], target_square))
+                    {
+                        //pawn promotion... can we use masks instead?
+                        if (source_square >= a7 && source_square <= h7)
+                        {
+                            //add move into move list
+                            printf("pawn promotion: %s%sq\n", square_to_coordinates[source_square], square_to_coordinates[target_square]);
+                            printf("pawn promotion: %s%sr\n", square_to_coordinates[source_square], square_to_coordinates[target_square]);
+                            printf("pawn promotion: %s%sb\n", square_to_coordinates[source_square], square_to_coordinates[target_square]);
+                            printf("pawn promotion: %s%sk\n", square_to_coordinates[source_square], square_to_coordinates[target_square]);
+                        }
+                        else 
+                        {
+                            //one ahead
+                            printf("pawn push: %s%s\n", square_to_coordinates[source_square], square_to_coordinates[target_square]);
+                            //two ahead
+                            //i feel like this could be sped up using bitwise operations
+                            if ((source_square >= a2 && source_square <= h2) && !get_bit(occupancies[both], target_square - 8))
+                            {
+                                //add move into move list
+                                printf("double pawn push: %s%s\n", square_to_coordinates[source_square], square_to_coordinates[target_square - 8]);
+                            }
+                        }
+                    }
+
+                    //quiet pawn moves
+                    pop_bit(bitboard, source_square);
+                }        
+            }
         }
         else 
         {
+            if (piece == p)
+            {
+                while (bitboard) //loop until no more P
+                {
+                    source_square = get_ls1b_index(bitboard);
+                    target_square = source_square + 8;
 
+                    //generate quiet pawn moves
+                    if (!(target_square > h1) && !get_bit(occupancies[both], target_square))
+                    {
+                        //pawn promotion... can we use masks instead?
+                        if (source_square >= a2 && source_square <= h2)
+                        {
+                            //add move into move list
+                            printf("pawn promotion: %s%sq\n", square_to_coordinates[source_square], square_to_coordinates[target_square]);
+                            printf("pawn promotion: %s%sr\n", square_to_coordinates[source_square], square_to_coordinates[target_square]);
+                            printf("pawn promotion: %s%sb\n", square_to_coordinates[source_square], square_to_coordinates[target_square]);
+                            printf("pawn promotion: %s%sk\n", square_to_coordinates[source_square], square_to_coordinates[target_square]);
+                        }
+                        else 
+                        {
+                            //one ahead
+                            printf("pawn push: %s%s\n", square_to_coordinates[source_square], square_to_coordinates[target_square]);
+                            //two ahead
+                            //i feel like this could be sped up using bitwise operations
+                            if ((source_square >= a7 && source_square <= h7) && !get_bit(occupancies[both], target_square + 8))
+                            {
+                                //add move into move list
+                                printf("double pawn push: %s%s\n", square_to_coordinates[source_square], square_to_coordinates[target_square + 8]);
+                            }
+                        }
+                    }
+
+                    //quiet pawn moves
+                    pop_bit(bitboard, source_square);
+                }        
+            }
         }
         //All other moves
     }
@@ -1039,9 +1111,8 @@ static inline void generate_moves()
 int main()
 {
     init_all();
-    parse_fen(tricky_position);
+    parse_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPpP/R3K2R b KQkq - 0 1 ");
     print_board();
-    print_bitboard(occupancies[both]);
-    print_attacked_squares(white);
+    generate_moves();
     return 0;
 }
