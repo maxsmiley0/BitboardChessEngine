@@ -1097,6 +1097,34 @@ static inline void generate_moves()
                     pop_bit(bitboard, source_square);
                 }        
             }
+            //castling case... squares between need to be empty, not in check. rooks can't have moved
+            else if (piece == K)
+            {
+                //WKCA
+                if (castle & wk)
+                {
+                    if (!get_bit(occupancies[both], f1) && !get_bit(occupancies[both], g1))
+                    {
+                        //why don't we check castling square..?
+                        if (!is_square_attacked(e1, black) && !is_square_attacked(f1, black))
+                        {
+                            printf("castling move: e1g1\n");
+                        }
+                    }
+                }
+                //WQCA
+                if (castle & wq)
+                {
+                    if (!get_bit(occupancies[both], d1) && !get_bit(occupancies[both], c1) && !get_bit(occupancies[both], b1))
+                    {
+                        //why don't we check castling square..?
+                        if (!is_square_attacked(e1, black) && !is_square_attacked(d1, black))
+                        {
+                            printf("castling move: e1c1\n");
+                        }
+                    }
+                }
+            }
         }
         else 
         {
@@ -1172,6 +1200,34 @@ static inline void generate_moves()
                     pop_bit(bitboard, source_square);
                 }        
             }
+            //castling case... squares between need to be empty, not in check. rooks can't have moved
+            else if (piece == k)
+            {
+                //BKCA
+                if (castle & bk)
+                {
+                    if (!get_bit(occupancies[both], f8) && !get_bit(occupancies[both], g8))
+                    {
+                        //why don't we check castling square..?
+                        if (!is_square_attacked(e8, white) && !is_square_attacked(f8, white))
+                        {
+                            printf("castling move: e8g8\n");
+                        }
+                    }
+                }
+                //BQCA
+                if (castle & bq)
+                {
+                    if (!get_bit(occupancies[both], d8) && !get_bit(occupancies[both], c8) && !get_bit(occupancies[both], b8))
+                    {
+                        //why don't we check castling square..? (handled in movegen)
+                        if (!is_square_attacked(e8, white) && !is_square_attacked(d8, white))
+                        {
+                            printf("castling move: e8c8\n");
+                        }
+                    }
+                }
+            }
         }
         //All other moves
     }
@@ -1181,7 +1237,7 @@ static inline void generate_moves()
 int main()
 {
     init_all();
-    parse_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/Pp2P3/2N2Q1p/1PPBBPpP/R3K2R b KQkq a3 0 1 ");
+    parse_fen("r3k2r/ppppqp1R/bn2pnp1/3PN3/1p2P3/2NB1q1p/PPPB1PPP/R3K2R b KQkq - 0 1 ");
     print_board();
     generate_moves();
     return 0;
