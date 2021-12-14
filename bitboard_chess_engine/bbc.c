@@ -1495,21 +1495,42 @@ static inline void generate_moves(moves *move_list)
     }
 }
 
+
+// preserve board state
+#define copy_board()                                                      \
+    U64 bitboards_copy[12], occupancies_copy[3];                          \
+    int side_copy, enpas_copy, castle_copy;                               \
+    memcpy(bitboards_copy, bitboards, 96);                                \
+    memcpy(occupancies_copy, occupancies, 24);                            \
+    side_copy = side, enpas_copy = enpas, castle_copy = castle;           \
+
+// restore board state
+#define take_back()                                                       \
+    memcpy(bitboards, bitboards_copy, 96);                                \
+    memcpy(occupancies, occupancies_copy, 24);                            \
+    side = side_copy, enpas = enpas_copy, castle = castle_copy;           \
+
+
 int main()
 {
     // init all
     init_all();
     
-    parse_fen(tricky_position);
+    // parse fen
+    parse_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq c6 0 1 ");
     print_board();
-    // create move list
-    moves move_list[1];
-    move_list->count = 0;
-    generate_moves(move_list);
-    // init move count
+    
+    // preserve board state
+    copy_board();
+    
+    // parse fen
+    parse_fen(empty_board);
+    print_board();
+    
+    // restore board state
+    take_back();
 
-    // print move list
-    print_move_list(move_list);
+    print_board();
     
     return 0;
 }
