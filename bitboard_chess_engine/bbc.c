@@ -1385,12 +1385,123 @@ static inline void generate_moves()
     1000 0000 0000 0000 0000 0000    castling flag       0x800000
 */
 
-//Main driver
+// encode move
+#define encode_move(source, target, piece, promoted, capture, double, enpas, castling) \
+    (source) |          \
+    (target << 6) |     \
+    (piece << 12) |     \
+    (promoted << 16) |  \
+    (capture << 20) |   \
+    (double << 21) |    \
+    (enpas << 22) | \
+    (castling << 23)    \
+    
+// extract source square
+#define get_move_source(move) (move & 0x3f)
+
+// extract target square
+#define get_move_target(move) ((move & 0xfc0) >> 6)
+
+// extract piece
+#define get_move_piece(move) ((move & 0xf000) >> 12)
+
+// extract promoted piece
+#define get_move_promoted(move) ((move & 0xf0000) >> 16)
+
+// extract capture flag
+#define get_move_capture(move) (move & 0x100000)
+
+// extract double pawn push flag
+#define get_move_double(move) (move & 0x200000)
+
+// extract enpassant flag
+#define get_move_enpas(move) (move & 0x400000)
+
+// extract castling flag
+#define get_move_castling(move) (move & 0x800000)
+
+
+// move list structure
+typedef struct {
+    // moves
+    int moves[256];
+    
+    // move count
+    int count;
+} moves;
+
+// add move to the move list
+static inline void add_move(moves *move_list, int move)
+{
+    // strore move
+    move_list->moves[move_list->count] = move;
+    
+    // increment move count
+    move_list->count++;
+}
+
+// print move (for UCI purposes)
+void print_move(int move)
+{
+    printf("%s%s\n", square_to_coordinates[get_move_source(move)],
+                     square_to_coordinates[get_move_target(move)]);
+}
+
+
+// print move list
+void print_move_list(moves *move_list)
+{
+    printf("\n    move    piece   capture   double    enpass    castling\n\n");
+    
+    // loop over moves within a move list
+    for (int move_count = 0; move_count < move_list->count; move_count++)
+    {
+        // init move
+        int move = move_list->moves[move_count];
+        
+        #ifdef WIN64
+            // print move
+            printf("    %s%s    %c       %d         %d         %d         %d\n", square_to_coordinates[get_move_source(move)],
+                                                                                  square_to_coordinates[get_move_target(move)],
+                                                                                  ascii_pieces[get_move_piece(move)],
+                                                                                  get_move_capture(move) ? 1 : 0,
+                                                                                  get_move_double(move) ? 1 : 0,
+                                                                                  get_move_enpas(move) ? 1 : 0,
+                                                                                  get_move_castling(move) ? 1 : 0);
+        #else
+            // print move
+            printf("    %s%s    %s       %d         %d         %d         %d\n", square_to_coordinates[get_move_source(move)],
+                                                                                  square_to_coordinates[get_move_target(move)],
+                                                                                  unicode_pieces[get_move_piece(move)],
+                                                                                  get_move_capture(move) ? 1 : 0,
+                                                                                  get_move_double(move) ? 1 : 0,
+                                                                                  get_move_enpas(move) ? 1 : 0,
+                                                                                  get_move_castling(move) ? 1 : 0);
+        #endif
+        
+        // print total number of moves
+        printf("\n\n    Total number of moves: %d\n\n", move_list->count);
+    }
+}
+
 int main()
 {
+    // init all
     init_all();
-    parse_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1 ");
-    print_board();
-    generate_moves();
+    
+    // create move list
+    moves move_list[1];
+    
+    // init move count
+    move_list->count = 0;
+    
+    // add move
+    add_move(move_list, encode_move(d7, e8, B, Q, 0, 0, 0, 1));
+    add_move(move_list, encode_move(f2, e1, Q, r, 0, 1, 0, 1));
+    add_move(move_list, encode_move(d7, e8, B, 0, 0, 0, 1, 0));
+    
+    // print move list
+    print_move_list(move_list);
+    
     return 0;
 }
