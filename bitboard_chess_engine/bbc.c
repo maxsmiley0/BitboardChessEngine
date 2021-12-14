@@ -1130,6 +1130,61 @@ void print_move_list(moves *move_list)
     printf("\n\n    Total number of moves: %d\n\n", move_list->count);
 }
 
+//move types
+enum {all_moves, only_captures};
+
+// preserve board state
+#define copy_board()                                                      \
+    U64 bitboards_copy[12], occupancies_copy[3];                          \
+    int side_copy, enpas_copy, castle_copy;                               \
+    memcpy(bitboards_copy, bitboards, 96);                                \
+    memcpy(occupancies_copy, occupancies, 24);                            \
+    side_copy = side, enpas_copy = enpas, castle_copy = castle;           \
+
+// restore board state
+#define take_back()                                                       \
+    memcpy(bitboards, bitboards_copy, 96);                                \
+    memcpy(occupancies, occupancies_copy, 24);                            \
+    side = side_copy, enpas = enpas_copy, castle = castle_copy;           \
+
+
+
+//I think the purpose of the move flag is to not make certain moves based on the flag (for quiescence search)... why don't we just have a seperate generate_moves function?
+static inline int make_move(int move, int move_flag)
+{
+    //quiet moves
+    if (move_flag == all_moves)
+    {
+        copy_board();
+        //parse move
+        int source_square = get_move_source(move);
+        int target_square = get_move_target(move);
+        int piece = get_move_piece(move);
+        int promoted = get_move_promoted(move);
+        int capture = get_move_capture(move);
+        int double_push = get_move_double(move);
+        int enpas = get_move_enpas(move);
+        int castling = get_move_castling(move);
+
+        //move piece
+        pop_bit(bitboards[piece], source_square);
+        set_bit(bitboards[piece], target_square);
+
+        return 1;
+    }
+    //capture moves
+    else 
+    {
+        if (get_move_capture(move))
+        {
+            make_move(move, all_moves);
+        }
+        else 
+        {
+            return 0;   //don't make it
+        }
+    }
+}
 
 static inline void generate_moves(moves *move_list)
 {   
@@ -1370,7 +1425,6 @@ static inline void generate_moves(moves *move_list)
                     }
                     else 
                     {
-                        printf("piece capture: %s%s\n", square_to_coordinates[source_square], square_to_coordinates[target_square]);
                         add_move(move_list, encode_move(source_square, target_square, piece, 0, 1, 0, 0, 0));
                     }
                     //capture move
@@ -1495,42 +1549,29 @@ static inline void generate_moves(moves *move_list)
     }
 }
 
-
-// preserve board state
-#define copy_board()                                                      \
-    U64 bitboards_copy[12], occupancies_copy[3];                          \
-    int side_copy, enpas_copy, castle_copy;                               \
-    memcpy(bitboards_copy, bitboards, 96);                                \
-    memcpy(occupancies_copy, occupancies, 24);                            \
-    side_copy = side, enpas_copy = enpas, castle_copy = castle;           \
-
-// restore board state
-#define take_back()                                                       \
-    memcpy(bitboards, bitboards_copy, 96);                                \
-    memcpy(occupancies, occupancies_copy, 24);                            \
-    side = side_copy, enpas = enpas_copy, castle = castle_copy;           \
-
-
 int main()
 {
     // init all
     init_all();
-    
-    // parse fen
-    parse_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq c6 0 1 ");
+    parse_fen(tricky_position);
     print_board();
-    
-    // preserve board state
-    copy_board();
-    
-    // parse fen
-    parse_fen(empty_board);
-    print_board();
-    
-    // restore board state
-    take_back();
 
-    print_board();
+    moves move_list[1];
+    generate_moves(move_list);
+
+    for (int move_count = 0; move_count < move_list->count; move_count++)
+    {
+        printf("%d", move_count);
+        int move = move_list->moves[move_count];
+        copy_board();
+        make_move(move, all_moves);
+        print_board();
+        getchar();
+
+        take_back();
+        print_board();
+        getchar();
+    }
     
     return 0;
 }
