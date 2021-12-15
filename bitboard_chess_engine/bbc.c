@@ -1147,6 +1147,30 @@ enum {all_moves, only_captures};
     memcpy(occupancies, occupancies_copy, 24);                            \
     side = side_copy, enpas = enpas_copy, castle = castle_copy;           \
 
+/*
+                           castling   move     in      in
+                              right update     binary  decimal
+ king & rooks didn't move:     1111 & 1111  =  1111    15
+        white king  moved:     1111 & 1100  =  1100    12
+  white king's rook moved:     1111 & 1110  =  1110    14
+ white queen's rook moved:     1111 & 1101  =  1101    13
+     
+         black king moved:     1111 & 0011  =  1011    3
+  black king's rook moved:     1111 & 1011  =  1011    11
+ black queen's rook moved:     1111 & 0111  =  0111    7
+*/
+
+// castling rights update constants
+const int castling_rights[64] = {
+     7, 15, 15, 15,  3, 15, 15, 11,
+    15, 15, 15, 15, 15, 15, 15, 15,
+    15, 15, 15, 15, 15, 15, 15, 15,
+    15, 15, 15, 15, 15, 15, 15, 15,
+    15, 15, 15, 15, 15, 15, 15, 15,
+    15, 15, 15, 15, 15, 15, 15, 15,
+    15, 15, 15, 15, 15, 15, 15, 15,
+    13, 15, 15, 15, 12, 15, 15, 14
+};
 
 
 //I think the purpose of the move flag is to not make certain moves based on the flag (for quiescence search)... why don't we just have a seperate generate_moves function?
@@ -1160,17 +1184,117 @@ static inline int make_move(int move, int move_flag)
         int source_square = get_move_source(move);
         int target_square = get_move_target(move);
         int piece = get_move_piece(move);
-        int promoted = get_move_promoted(move);
+        int promoted_piece = get_move_promoted(move);
         int capture = get_move_capture(move);
         int double_push = get_move_double(move);
-        int enpas = get_move_enpas(move);
+        int ep = get_move_enpas(move);
         int castling = get_move_castling(move);
 
         //move piece
         pop_bit(bitboards[piece], source_square);
         set_bit(bitboards[piece], target_square);
+        //ideally we should store captured piece...
+        //handling capture moves
+        if (capture)
+        {
+            int start_piece, end_piece;
+            if (side == white)
+            {
+                start_piece = p;
+                end_piece = k;
+            }
+            else 
+            {
+                start_piece = P;
+                end_piece = K;
+            }
+            //loop over bitboards opposite to the current side to move
+            for (int bb_piece = start_piece; bb_piece <= end_piece; bb_piece++)
+            {
+                if (get_bit(bitboards[bb_piece], target_square))
+                {
+                    pop_bit(bitboards[bb_piece], target_square);
+                    break;
+                }
+            }
+        }
 
-        return 1;
+        //handle pawn promotions
+        if (promoted_piece)
+        {
+            pop_bit(bitboards[(side == white) ? P : p], target_square);
+            set_bit(bitboards[promoted_piece], target_square);
+        }
+        if (ep)
+        {
+            (side == white) ? pop_bit(bitboards[p], target_square + 8) : pop_bit(bitboards[P], target_square - 8);
+        }
+        //reset enpas square
+        enpas = no_sq;
+        if (double_push)
+        {
+            (side == white) ? (enpas = target_square + 8) : 
+                              (enpas = target_square - 8);
+        }
+
+        if (castling)
+        {
+            switch (target_square)
+            {
+                //WKCA
+                case g1:
+                    pop_bit(bitboards[R], h1);
+                    set_bit(bitboards[R], f1);
+                    break;
+                //WQCA
+                case c1:
+                    pop_bit(bitboards[R], a1);
+                    set_bit(bitboards[R], d1);
+                    break;
+                //BKCA
+                case g8:
+                    pop_bit(bitboards[r], h8);
+                    set_bit(bitboards[r], f8);
+                    break;
+                //BQCA
+                case c8:
+                    pop_bit(bitboards[r], a8);
+                    set_bit(bitboards[r], d8);
+                    break;
+            }
+        }
+        //update castling rights
+        castle &= castling_rights[source_square];
+        castle &= castling_rights[target_square];
+
+        //update occupancies... by resetting manually
+        memset(occupancies, 0ULL, 24);
+        for (int bb_piece = P; bb_piece <= K; bb_piece++)
+        {
+            occupancies[white] |= bitboards[bb_piece];
+        }
+        for (int bb_piece = p; bb_piece <= k; bb_piece++)
+        {
+            occupancies[black] |= bitboards[bb_piece];
+        }
+        occupancies[both] |= occupancies[white];
+        occupancies[both] |= occupancies[black];
+
+        //change side
+        side ^= 1;
+        if (is_square_attacked((side == white) ? get_ls1b_index(bitboards[k]) : get_ls1b_index(bitboards[K]), side))
+        {
+            // take move back
+            take_back();
+            
+            // return illegal move
+            return 0;
+        }
+        
+        //
+        else
+            // return legal move
+            return 1;
     }
     //capture moves
     else 
@@ -1553,7 +1677,8 @@ int main()
 {
     // init all
     init_all();
-    parse_fen(tricky_position);
+    //"r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1 "
+    parse_fen("r3k2r/p1ppRpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R b KQkq - 0 1 ");
     print_board();
 
     moves move_list[1];
@@ -1561,15 +1686,16 @@ int main()
 
     for (int move_count = 0; move_count < move_list->count; move_count++)
     {
-        printf("%d", move_count);
         int move = move_list->moves[move_count];
         copy_board();
-        make_move(move, all_moves);
+        if (!make_move(move, all_moves))
+        {
+            continue;
+        }
         print_board();
         getchar();
 
         take_back();
-        print_board();
         getchar();
     }
     
