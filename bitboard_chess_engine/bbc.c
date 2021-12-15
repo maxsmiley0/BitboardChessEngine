@@ -1,6 +1,8 @@
+
 //System headers
 #include <stdio.h>
 #include <string.h>
+#include <chrono>
 
 //Bit manipulations
 //Bitboard data type
@@ -14,6 +16,7 @@
 
 //So cool!! We can actually generate massive data in code by printing it formatted like that
 //board squares
+
 enum {
     a8, b8, c8, d8, e8, f8, g8, h8,      
     a7, b7, c7, d7, e7, f7, g7, h7,      
@@ -1673,16 +1676,39 @@ static inline void generate_moves(moves *move_list)
     }
 }
 
-int main()
+//Timer class for statistics purposes
+class Timer
 {
-    // init all
-    init_all();
-    //"r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1 "
-    parse_fen("r3k2r/p1ppRpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R b KQkq - 0 1 ");
-    print_board();
+  public:
+    Timer()
+    {
+        start();
+    }
+    void start()
+    {
+        m_time = std::chrono::high_resolution_clock::now();
+    }
+    double elapsed() const
+    {
+        std::chrono::duration<double,std::milli> diff =
+                          std::chrono::high_resolution_clock::now() - m_time;
+        return diff.count();
+    }
+  private:
+    std::chrono::high_resolution_clock::time_point m_time;
+};
 
+static inline int perft_driver(int depth)
+{
+    int total_nodes = 0;
     moves move_list[1];
     generate_moves(move_list);
+    
+    if (depth == 0)
+    {
+        return 1;
+    }
+
 
     for (int move_count = 0; move_count < move_list->count; move_count++)
     {
@@ -1692,12 +1718,22 @@ int main()
         {
             continue;
         }
-        print_board();
-        getchar();
-
+        total_nodes += perft_driver(depth - 1);
         take_back();
-        getchar();
     }
-    
+
+    return total_nodes;
+}
+
+int main()
+{
+    init_all();
+    parse_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+    print_board();
+    Timer t1;
+    t1.start();
+    int x = perft_driver(5);
+    printf("Time Elapsed: %fms\n", t1.elapsed());
+    printf("%d\n", x);
     return 0;
 }
