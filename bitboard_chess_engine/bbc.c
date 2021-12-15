@@ -1699,15 +1699,15 @@ class Timer
 };
 
 static inline int perft_driver(int depth)
-{
-    int total_nodes = 0;
-    moves move_list[1];
-    generate_moves(move_list);
-    
+{    
     if (depth == 0)
     {
         return 1;
     }
+
+    int total_nodes = 0;
+    moves move_list[1];
+    generate_moves(move_list);
 
 
     for (int move_count = 0; move_count < move_list->count; move_count++)
@@ -1732,7 +1732,7 @@ int main()
     print_board();
     Timer t1;
     t1.start();
-    int x = perft_driver(5);
+    int x = perft_driver(6);
     printf("Time Elapsed: %fms\n", t1.elapsed());
     printf("%d\n", x);
     return 0;
